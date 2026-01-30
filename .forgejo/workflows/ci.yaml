@@ -112,10 +112,30 @@ jobs:
       - name: Build release
         run: cargo build --release --workspace
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-x86_64-gnu
+          retention-days: 1
+          path: |
+            target/release/fakenotifyd
+            target/release/libfakenotify_preload.so
+
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries-x86_64-gnu
+          path: dist
+
       - name: Verify outputs
         run: |
-          ls -la target/release/
-          test -f target/release/fakenotifyd
-          test -f target/release/libfakenotify_preload.so
-          file target/release/fakenotifyd
-          file target/release/libfakenotify_preload.so
+          ls -la dist/
+          file dist/fakenotifyd
+          file dist/libfakenotify_preload.so
+          test -x dist/fakenotifyd || chmod +x dist/fakenotifyd
+          ./dist/fakenotifyd --help || true

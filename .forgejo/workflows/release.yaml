@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -18,12 +24,16 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             artifact: x86_64-gnu
+            use_cross: false
           - target: x86_64-unknown-linux-musl
             artifact: x86_64-musl
+            use_cross: true
           - target: aarch64-unknown-linux-gnu
             artifact: aarch64-gnu
+            use_cross: true
           - target: aarch64-unknown-linux-musl
             artifact: aarch64-musl
+            use_cross: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +42,7 @@ jobs:
         uses: https://forge.blackleafdigital.com/BlackLeafDigital/actions/setup-rust@main
 
       - name: Install cross
+        if: matrix.use_cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Restore cache
@@ -47,7 +58,12 @@ jobs:
           secret-key: ${{ secrets.S3_ACCESS_SECRET }}
 
       - name: Build
-        run: cross build --release --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.use_cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }}
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
 
       - name: Package
         run: |
@@ -106,7 +122,11 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
@@ -200,7 +220,14 @@ jobs:
 
       - name: Extract version
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push daemon
         uses: docker/build-push-action@v6
