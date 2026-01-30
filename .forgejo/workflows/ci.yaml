@@ -110,10 +110,11 @@ jobs:
           secret-key: ${{ secrets.S3_ACCESS_SECRET }}
 
       - name: Build release
-        run: cargo build --release
+        run: cargo build --release --workspace
 
       - name: Verify outputs
         run: |
+          ls -la target/release/
           test -f target/release/fakenotifyd
           test -f target/release/libfakenotify_preload.so
           file target/release/fakenotifyd
