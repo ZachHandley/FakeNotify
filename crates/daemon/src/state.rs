@@ -31,6 +31,7 @@ pub struct Client {
     /// Watches owned by this client
     pub watches: RwLock<Vec<WatchDescriptor>>,
     /// Connection time
+    #[allow(dead_code)]
     pub connected_at: Instant,
 }
 
@@ -94,6 +95,7 @@ pub struct DaemonState {
     next_wd: AtomicI32,
 
     /// Daemon start time
+    #[allow(dead_code)]
     started_at: Instant,
 }
 
@@ -151,6 +153,7 @@ impl DaemonState {
     }
 
     /// Get a client by ID
+    #[allow(dead_code)]
     pub fn get_client(&self, client_id: ClientId) -> Option<Arc<Client>> {
         self.clients.read().get(&client_id).cloned()
     }
@@ -170,23 +173,23 @@ impl DaemonState {
         let mut path_to_wd = self.path_to_wd.write();
 
         // Check if path is already being watched
-        if let Some(&wd) = path_to_wd.get(&path) {
-            if let Some(watch) = watches.get_mut(&wd) {
-                // Add client to existing watch if not already present
-                if !watch.clients.contains(&client_id) {
-                    watch.clients.push(client_id);
-                }
-                // Merge masks
-                watch.mask |= mask;
-                tracing::debug!(wd = wd, path = %path.display(), "Client added to existing watch");
-
-                // Add watch to client's list
-                if let Some(client) = self.clients.read().get(&client_id) {
-                    client.add_watch(wd);
-                }
-
-                return wd;
+        if let Some(&wd) = path_to_wd.get(&path)
+            && let Some(watch) = watches.get_mut(&wd)
+        {
+            // Add client to existing watch if not already present
+            if !watch.clients.contains(&client_id) {
+                watch.clients.push(client_id);
             }
+            // Merge masks
+            watch.mask |= mask;
+            tracing::debug!(wd = wd, path = %path.display(), "Client added to existing watch");
+
+            // Add watch to client's list
+            if let Some(client) = self.clients.read().get(&client_id) {
+                client.add_watch(wd);
+            }
+
+            return wd;
         }
 
         // Create new watch
@@ -241,6 +244,7 @@ impl DaemonState {
     }
 
     /// Get all watched paths
+    #[allow(dead_code)]
     pub fn get_watched_paths(&self) -> Vec<PathBuf> {
         self.watches
             .read()
@@ -250,11 +254,13 @@ impl DaemonState {
     }
 
     /// Get watch info by descriptor
+    #[allow(dead_code)]
     pub fn get_watch(&self, wd: WatchDescriptor) -> Option<WatchInfo> {
         self.watches.read().get(&wd).cloned()
     }
 
     /// Get watch descriptor for a path
+    #[allow(dead_code)]
     pub fn get_wd_for_path(&self, path: &PathBuf) -> Option<WatchDescriptor> {
         self.path_to_wd.read().get(path).copied()
     }
@@ -272,12 +278,11 @@ impl DaemonState {
         // Check parent directories for recursive watches
         let mut current = path.as_path();
         while let Some(parent) = current.parent() {
-            if let Some(&wd) = path_to_wd.get(&parent.to_path_buf()) {
-                if let Some(watch) = watches.get(&wd) {
-                    if watch.recursive {
-                        return Some(watch.clone());
-                    }
-                }
+            if let Some(&wd) = path_to_wd.get(&parent.to_path_buf())
+                && let Some(watch) = watches.get(&wd)
+                && watch.recursive
+            {
+                return Some(watch.clone());
             }
             current = parent;
         }
@@ -302,6 +307,7 @@ impl DaemonState {
     }
 
     /// Get daemon statistics
+    #[allow(dead_code)]
     pub fn stats(&self) -> DaemonStats {
         DaemonStats {
             uptime_secs: self.started_at.elapsed().as_secs(),
@@ -319,6 +325,7 @@ impl Default for DaemonState {
 
 /// Daemon statistics
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct DaemonStats {
     pub uptime_secs: u64,
     pub total_clients: usize,

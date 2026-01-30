@@ -52,7 +52,9 @@ mod tests {
 
     #[test]
     fn test_protocol_version_exists() {
-        assert!(PROTOCOL_VERSION >= 1);
+        const {
+            assert!(PROTOCOL_VERSION >= 1);
+        }
     }
 
     #[test]

@@ -101,7 +101,7 @@ impl WatcherManager {
                         let is_dir = path.is_dir();
                         let _ = event_tx_clone.send(WatcherEvent {
                             path,
-                            kind: event.kind.clone(),
+                            kind: event.kind,
                             is_dir,
                         });
                     }
@@ -144,6 +144,7 @@ impl WatcherManager {
     }
 
     /// Remove a watched path
+    #[allow(dead_code)]
     pub fn remove_watch(&mut self, path: &PathBuf) -> notify::Result<()> {
         self.watcher.unwatch(path)?;
         self.watched_paths.remove(path);

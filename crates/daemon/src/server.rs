@@ -42,10 +42,10 @@ impl Server {
         }
 
         // Create parent directory if needed
-        if let Some(parent) = self.socket_path.parent() {
-            if !parent.exists() {
-                std::fs::create_dir_all(parent)?;
-            }
+        if let Some(parent) = self.socket_path.parent()
+            && !parent.exists()
+        {
+            std::fs::create_dir_all(parent)?;
         }
 
         // Bind the socket

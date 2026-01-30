@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Main configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     /// Daemon configuration
     #[serde(default)]
@@ -80,15 +80,6 @@ fn default_recursive() -> bool {
     true
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            daemon: DaemonConfig::default(),
-            watch: Vec::new(),
-        }
-    }
-}
-
 impl Default for DaemonConfig {
     fn default() -> Self {
         Self {
@@ -102,6 +93,7 @@ impl Default for DaemonConfig {
 
 impl Config {
     /// Load configuration from all sources
+    #[allow(clippy::result_large_err)]
     pub fn load(config_file: Option<&PathBuf>) -> Result<Self, figment::Error> {
         let mut figment = Figment::new().merge(Serialized::defaults(Config::default()));
 
