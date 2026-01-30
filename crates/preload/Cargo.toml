@@ -1,0 +1,18 @@
+[package]
+name = "fakenotify-preload"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bincode.workspace = true
+ctor.workspace = true
+fakenotify-protocol = { version = "0.1.0", path = "../protocol" }
+libc.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+thiserror.workspace = true

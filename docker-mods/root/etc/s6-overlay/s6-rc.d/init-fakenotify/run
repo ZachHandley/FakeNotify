@@ -1,0 +1,40 @@
+#!/usr/bin/with-contenv bash
+# FakeNotify DockerMod init script
+
+echo "**** Configuring FakeNotify ****"
+
+# Check for library in standard location (from host mount)
+if [ -f "/run/fakenotify/libfakenotify_preload.so" ]; then
+    PRELOAD_PATH="/run/fakenotify/libfakenotify_preload.so"
+    echo "**** Found FakeNotify library at $PRELOAD_PATH ****"
+else
+    # Download if not mounted
+    mkdir -p /fakenotify
+    PRELOAD_PATH="/fakenotify/libfakenotify_preload.so"
+
+    FAKENOTIFY_VERSION="${FAKENOTIFY_VERSION:-latest}"
+    if [ "$FAKENOTIFY_VERSION" = "latest" ]; then
+        DOWNLOAD_URL="https://github.com/zachhandley/FakeNotify/releases/latest/download/libfakenotify_preload.so"
+    else
+        DOWNLOAD_URL="https://github.com/zachhandley/FakeNotify/releases/download/${FAKENOTIFY_VERSION}/libfakenotify_preload.so"
+    fi
+
+    echo "**** Downloading FakeNotify from $DOWNLOAD_URL ****"
+    curl -sL "$DOWNLOAD_URL" -o "$PRELOAD_PATH" || {
+        echo "**** Failed to download FakeNotify library ****"
+        exit 0
+    }
+    chmod 755 "$PRELOAD_PATH"
+fi
+
+# Check if socket is available
+if [ ! -S "/run/fakenotify/fakenotify.sock" ]; then
+    echo "**** Warning: FakeNotify socket not found ****"
+    echo "**** Make sure fakenotifyd is running on the host ****"
+fi
+
+# Set LD_PRELOAD globally for all services
+mkdir -p /run/s6/container_environment
+echo "$PRELOAD_PATH" > /run/s6/container_environment/LD_PRELOAD
+
+echo "**** FakeNotify configured ****"

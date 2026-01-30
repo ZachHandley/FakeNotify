@@ -1,0 +1,68 @@
+#!/bin/bash
+set -e
+
+# FakeNotify installer
+# Run as: sudo ./install.sh
+
+INSTALL_DIR="/usr/local"
+SYSTEMD_DIR="/etc/systemd/system"
+CONFIG_DIR="/etc/fakenotify"
+
+echo "Installing FakeNotify..."
+
+# Check if built
+if [ ! -f "target/release/fakenotifyd" ] || [ ! -f "target/release/libfakenotify_preload.so" ]; then
+    echo "Building first..."
+    cargo build --release
+fi
+
+# Install binaries
+echo "Installing binaries to $INSTALL_DIR..."
+install -Dm755 target/release/fakenotifyd "$INSTALL_DIR/bin/fakenotifyd"
+install -Dm755 target/release/libfakenotify_preload.so "$INSTALL_DIR/lib/libfakenotify_preload.so"
+
+# Install systemd service
+echo "Installing systemd service..."
+install -Dm644 fakenotify.service "$SYSTEMD_DIR/fakenotify.service"
+
+# Create config directory
+mkdir -p "$CONFIG_DIR"
+
+# Create default config if not exists
+if [ ! -f "$CONFIG_DIR/config.toml" ]; then
+    echo "Creating default config..."
+    cat > "$CONFIG_DIR/config.toml" << 'EOF'
+[daemon]
+socket = "/run/fakenotify/fakenotify.sock"
+log_level = "info"
+
+# Add your NFS paths here:
+# [[watch]]
+# path = "/mnt/media"
+# poll_interval = 5
+# recursive = true
+EOF
+fi
+
+# Reload systemd
+systemctl daemon-reload
+
+echo ""
+echo "Installation complete!"
+echo ""
+echo "Next steps:"
+echo "  1. Edit /etc/fakenotify/config.toml to add your NFS paths"
+echo "  2. Start the daemon: sudo systemctl start fakenotify"
+echo "  3. Enable on boot: sudo systemctl enable fakenotify"
+echo ""
+echo "For Docker containers, add to your compose:"
+echo "  environment:"
+echo "    - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so"
+echo "  volumes:"
+echo "    - /run/fakenotify:/run/fakenotify"
+echo ""
+echo "For LinuxServer.io containers, use the DockerMod instead:"
+echo "  environment:"
+echo "    - DOCKER_MODS=ghcr.io/zachhandley/fakenotify-mod:latest"
+echo "  volumes:"
+echo "    - /run/fakenotify:/run/fakenotify"

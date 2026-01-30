@@ -1,0 +1,24 @@
+[Unit]
+Description=FakeNotify - inotify injection for NFS
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/cp /usr/local/lib/libfakenotify_preload.so /run/fakenotify/
+ExecStart=/usr/local/bin/fakenotifyd start
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+# Socket directory
+RuntimeDirectory=fakenotify
+RuntimeDirectoryMode=0755
+
+# Security hardening (optional, remove if causes issues)
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

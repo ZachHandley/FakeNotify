@@ -1,0 +1,12 @@
+# Release Dockerfile - uses pre-built binaries
+FROM alpine:3.21
+
+# Copy pre-built binaries from dist/
+COPY dist/fakenotifyd-x86_64-unknown-linux-musl /usr/local/bin/fakenotifyd
+COPY dist/libfakenotify_preload-x86_64-unknown-linux-musl.so /usr/local/lib/libfakenotify_preload.so
+
+RUN chmod +x /usr/local/bin/fakenotifyd && \
+    mkdir -p /run/fakenotify
+
+ENTRYPOINT ["/usr/local/bin/fakenotifyd"]
+CMD ["start"]

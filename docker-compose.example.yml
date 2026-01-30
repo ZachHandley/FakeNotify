@@ -1,0 +1,46 @@
+# FakeNotify Docker Compose Examples
+#
+# Prerequisites:
+#   1. Install FakeNotify on the host: sudo ./install.sh
+#   2. Start the daemon: sudo systemctl start fakenotify
+#
+# The systemd service copies the library to /run/fakenotify/
+# so you only need ONE volume mount per container.
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    environment:
+      - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so
+    volumes:
+      - /run/fakenotify:/run/fakenotify
+      - /mnt/media:/media
+
+  sonarr:
+    image: linuxserver/sonarr:latest
+    environment:
+      - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so
+    volumes:
+      - /run/fakenotify:/run/fakenotify
+      - /mnt/media:/media
+      - /mnt/downloads:/downloads
+
+  radarr:
+    image: linuxserver/radarr:latest
+    environment:
+      - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so
+    volumes:
+      - /run/fakenotify:/run/fakenotify
+      - /mnt/media:/media
+      - /mnt/downloads:/downloads
+
+# --- Using DockerMod (even simpler for LSIO containers) ---
+# No LD_PRELOAD needed, the mod handles it:
+#
+#   sonarr:
+#     image: linuxserver/sonarr:latest
+#     environment:
+#       - DOCKER_MODS=ghcr.io/zachhandley/fakenotify-mod:latest
+#     volumes:
+#       - /run/fakenotify:/run/fakenotify
+#       - /mnt/media:/media

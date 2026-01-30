@@ -1,0 +1,21 @@
+[package]
+name = "fakenotifyd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+clap.workspace = true
+color-eyre.workspace = true
+fakenotify-protocol = { version = "0.1.0", path = "../protocol" }
+figment.workspace = true
+notify.workspace = true
+notify-debouncer-full.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+dirs = "5"
