@@ -479,6 +479,11 @@ pub unsafe extern "C" fn close(fd: c_int) -> c_int {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// Mutex to serialize tests that manipulate environment variables.
+    /// This prevents race conditions when tests run in parallel.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_managed_fds() {
@@ -496,7 +501,9 @@ mod tests {
 
     #[test]
     fn test_socket_path_uses_xdg() {
-        // SAFETY: Tests run serially and we restore the env vars
+        let _guard = ENV_LOCK.lock().unwrap();
+
+        // SAFETY: Tests run serially (protected by ENV_LOCK) and we restore the env vars
         unsafe {
             std::env::remove_var("FAKENOTIFY_SOCKET");
             std::env::set_var("XDG_RUNTIME_DIR", "/run/user/1000");
@@ -506,7 +513,7 @@ mod tests {
         assert_eq!(path, PathBuf::from("/run/user/1000/fakenotify.sock"));
 
         // Clean up
-        // SAFETY: Tests run serially
+        // SAFETY: Tests run serially (protected by ENV_LOCK)
         unsafe {
             std::env::remove_var("XDG_RUNTIME_DIR");
         }
@@ -514,7 +521,9 @@ mod tests {
 
     #[test]
     fn test_socket_path_env_override() {
-        // SAFETY: Tests run serially and we restore the env vars
+        let _guard = ENV_LOCK.lock().unwrap();
+
+        // SAFETY: Tests run serially (protected by ENV_LOCK) and we restore the env vars
         unsafe {
             std::env::set_var("FAKENOTIFY_SOCKET", "/tmp/test.sock");
         }
@@ -523,7 +532,7 @@ mod tests {
         assert_eq!(path, PathBuf::from("/tmp/test.sock"));
 
         // Clean up
-        // SAFETY: Tests run serially
+        // SAFETY: Tests run serially (protected by ENV_LOCK)
         unsafe {
             std::env::remove_var("FAKENOTIFY_SOCKET");
         }
