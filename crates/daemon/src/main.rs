@@ -11,14 +11,14 @@ mod watcher;
 
 use clap::Parser;
 use cli::{Cli, Command};
-use color_eyre::eyre::{bail, Result};
+use color_eyre::eyre::{Result, bail};
 use config::Config;
 use fakenotify_protocol::Request;
-use server::{is_daemon_running, send_daemon_request, Server};
+use server::{Server, is_daemon_running, send_daemon_request};
 use state::DaemonState;
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -48,35 +48,22 @@ async fn main() -> Result<()> {
             socket,
             daemonize,
             pid_file,
-        } => {
-            cmd_start(config, socket, daemonize, pid_file).await
-        }
-        Command::Stop { socket } => {
-            cmd_stop(&config, socket).await
-        }
-        Command::Status { socket } => {
-            cmd_status(&config, socket).await
-        }
+        } => cmd_start(config, socket, daemonize, pid_file).await,
+        Command::Stop { socket } => cmd_stop(&config, socket).await,
+        Command::Status { socket } => cmd_status(&config, socket).await,
         Command::Add {
             path,
             poll_interval,
             recursive,
             socket,
-        } => {
-            cmd_add(&config, socket, path, poll_interval, recursive).await
-        }
-        Command::Remove { path, socket } => {
-            cmd_remove(&config, socket, path).await
-        }
-        Command::List { socket } => {
-            cmd_list(&config, socket).await
-        }
+        } => cmd_add(&config, socket, path, poll_interval, recursive).await,
+        Command::Remove { path, socket } => cmd_remove(&config, socket, path).await,
+        Command::List { socket } => cmd_list(&config, socket).await,
     }
 }
 
 fn init_logging(level: &str) -> Result<()> {
-    let filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new(level))?;
+    let filter = EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new(level))?;
 
     tracing_subscriber::registry()
         .with(fmt::layer().with_target(true))
@@ -152,7 +139,7 @@ async fn cmd_start(
     tokio::spawn(async move {
         #[cfg(unix)]
         {
-            use tokio::signal::unix::{signal, SignalKind};
+            use tokio::signal::unix::{SignalKind, signal};
 
             let mut sigterm = signal(SignalKind::terminate()).expect("Failed to set up SIGTERM");
             let mut sigint = signal(SignalKind::interrupt()).expect("Failed to set up SIGINT");
@@ -176,18 +163,16 @@ async fn cmd_start(
 
         #[cfg(not(unix))]
         {
-            tokio::signal::ctrl_c().await.expect("Failed to set up Ctrl+C");
+            tokio::signal::ctrl_c()
+                .await
+                .expect("Failed to set up Ctrl+C");
             tracing::info!("Received Ctrl+C");
             let _ = shutdown_tx_clone.send(());
         }
     });
 
     // Start the file watcher
-    let default_poll_interval = config
-        .watch
-        .first()
-        .map(|w| w.poll_interval)
-        .unwrap_or(5);
+    let default_poll_interval = config.watch.first().map(|w| w.poll_interval).unwrap_or(5);
 
     let _watcher = watcher::start_watcher(
         Arc::clone(&state),
@@ -218,7 +203,10 @@ async fn cmd_stop(config: &Config, socket_override: Option<std::path::PathBuf>) 
             // The daemon is running, we'd need a shutdown command
             // For now, we'll just report that it's running
             // A real implementation would send a shutdown command
-            println!("Daemon is running at {}. Use kill or systemctl to stop.", socket_path.display());
+            println!(
+                "Daemon is running at {}. Use kill or systemctl to stop.",
+                socket_path.display()
+            );
             println!("(Shutdown command not implemented - use SIGTERM)");
         }
         Err(e) => {

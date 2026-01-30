@@ -35,10 +35,10 @@ mod message;
 mod socket;
 
 // Re-export main types at crate root
-pub use event::{event_size_with_name, EventMask, InotifyEvent};
+pub use event::{EventMask, InotifyEvent, event_size_with_name};
 pub use message::{FramedMessage, ProtocolError, Request, Response};
 pub use socket::{
-    get_socket_path, get_socket_path_with_xdg_fallback, DEFAULT_SOCKET_PATH, SOCKET_ENV_VAR,
+    DEFAULT_SOCKET_PATH, SOCKET_ENV_VAR, get_socket_path, get_socket_path_with_xdg_fallback,
 };
 
 /// Protocol version for compatibility checking.

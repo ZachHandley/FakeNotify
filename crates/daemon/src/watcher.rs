@@ -7,13 +7,13 @@ use crate::config::WatchConfig;
 use crate::state::DaemonState;
 use fakenotify_protocol::{EventMask, FramedMessage, InotifyEvent};
 use notify::{
-    event::{CreateKind, ModifyKind, RemoveKind, RenameMode},
     Config, EventKind, PollWatcher, RecursiveMode, Watcher,
+    event::{CreateKind, ModifyKind, RemoveKind, RenameMode},
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
@@ -39,9 +39,7 @@ fn notify_to_inotify_mask(kind: &EventKind, is_dir: bool) -> Option<EventMask> {
             ModifyKind::Metadata(_) => EventMask::IN_ATTRIB,
             ModifyKind::Name(RenameMode::From) => EventMask::IN_MOVED_FROM,
             ModifyKind::Name(RenameMode::To) => EventMask::IN_MOVED_TO,
-            ModifyKind::Name(RenameMode::Both) => {
-                EventMask::IN_MOVED_FROM | EventMask::IN_MOVED_TO
-            }
+            ModifyKind::Name(RenameMode::Both) => EventMask::IN_MOVED_FROM | EventMask::IN_MOVED_TO,
             ModifyKind::Name(_) => EventMask::IN_MOVE,
             ModifyKind::Any => EventMask::IN_MODIFY,
             _ => EventMask::IN_MODIFY,
@@ -86,7 +84,9 @@ pub struct WatcherManager {
 
 impl WatcherManager {
     /// Create a new watcher manager
-    pub fn new(poll_interval_secs: u64) -> notify::Result<(Self, mpsc::UnboundedSender<WatcherEvent>)> {
+    pub fn new(
+        poll_interval_secs: u64,
+    ) -> notify::Result<(Self, mpsc::UnboundedSender<WatcherEvent>)> {
         let (event_tx, event_rx) = mpsc::unbounded_channel();
         let event_tx_clone = event_tx.clone();
 
@@ -95,21 +95,19 @@ impl WatcherManager {
             .with_compare_contents(false); // Use mtime, not content hashing
 
         let watcher = PollWatcher::new(
-            move |res: Result<notify::Event, notify::Error>| {
-                match res {
-                    Ok(event) => {
-                        for path in event.paths {
-                            let is_dir = path.is_dir();
-                            let _ = event_tx_clone.send(WatcherEvent {
-                                path,
-                                kind: event.kind.clone(),
-                                is_dir,
-                            });
-                        }
+            move |res: Result<notify::Event, notify::Error>| match res {
+                Ok(event) => {
+                    for path in event.paths {
+                        let is_dir = path.is_dir();
+                        let _ = event_tx_clone.send(WatcherEvent {
+                            path,
+                            kind: event.kind.clone(),
+                            is_dir,
+                        });
                     }
-                    Err(e) => {
-                        tracing::error!(error = %e, "Watch error");
-                    }
+                }
+                Err(e) => {
+                    tracing::error!(error = %e, "Watch error");
                 }
             },
             config,

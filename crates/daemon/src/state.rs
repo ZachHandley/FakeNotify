@@ -9,8 +9,8 @@ use fakenotify_protocol::EventMask;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
 use std::time::Instant;
 use tokio::io::AsyncWriteExt;
 use tokio::net::unix::OwnedWriteHalf;
@@ -242,7 +242,11 @@ impl DaemonState {
 
     /// Get all watched paths
     pub fn get_watched_paths(&self) -> Vec<PathBuf> {
-        self.watches.read().values().map(|w| w.path.clone()).collect()
+        self.watches
+            .read()
+            .values()
+            .map(|w| w.path.clone())
+            .collect()
     }
 
     /// Get watch info by descriptor

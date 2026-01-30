@@ -20,10 +20,10 @@
 //! - Thread safety (all state behind RwLock)
 //! - No interference with app's own operations
 
-use fakenotify_protocol::{get_socket_path_with_xdg_fallback, FramedMessage, Request, Response};
+use fakenotify_protocol::{FramedMessage, Request, Response, get_socket_path_with_xdg_fallback};
 use parking_lot::RwLock;
 use std::collections::HashSet;
-use std::ffi::{c_char, c_int, CStr};
+use std::ffi::{CStr, c_char, c_int};
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
@@ -327,11 +327,7 @@ fn call_real_inotify_init1(flags: c_int) -> c_int {
 /// This function is called by libc as a replacement for inotify_add_watch.
 /// The pathname must be a valid C string.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn inotify_add_watch(
-    fd: c_int,
-    pathname: *const c_char,
-    mask: u32,
-) -> c_int {
+pub unsafe extern "C" fn inotify_add_watch(fd: c_int, pathname: *const c_char, mask: u32) -> c_int {
     std::panic::catch_unwind(|| {
         // Check if this is our fd
         if !is_managed_fd(fd) {

@@ -179,11 +179,7 @@ async fn handle_client(
 }
 
 /// Handle a single request
-async fn handle_request(
-    state: &DaemonState,
-    client_id: ClientId,
-    request: Request,
-) -> Response {
+async fn handle_request(state: &DaemonState, client_id: ClientId, request: Request) -> Response {
     match request {
         Request::RegisterClient => {
             // Already registered during connection
@@ -235,7 +231,10 @@ pub async fn is_daemon_running(socket_path: &Path) -> bool {
 }
 
 /// Send a request to the daemon and receive a response
-pub async fn send_daemon_request(socket_path: &Path, request: Request) -> color_eyre::Result<Response> {
+pub async fn send_daemon_request(
+    socket_path: &Path,
+    request: Request,
+) -> color_eyre::Result<Response> {
     let mut stream = UnixStream::connect(socket_path).await?;
 
     // Read the initial ClientRegistered response

@@ -126,9 +126,7 @@ mod tests {
         ]);
         match cli.command {
             Command::Start {
-                socket,
-                daemonize,
-                ..
+                socket, daemonize, ..
             } => {
                 assert_eq!(socket, Some(PathBuf::from("/tmp/test.sock")));
                 assert!(daemonize);
@@ -139,13 +137,7 @@ mod tests {
 
     #[test]
     fn test_cli_parse_add() {
-        let cli = Cli::parse_from([
-            "fakenotifyd",
-            "add",
-            "/mnt/media",
-            "--poll-interval",
-            "10",
-        ]);
+        let cli = Cli::parse_from(["fakenotifyd", "add", "/mnt/media", "--poll-interval", "10"]);
         match cli.command {
             Command::Add {
                 path,

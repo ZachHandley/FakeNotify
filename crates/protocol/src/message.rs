@@ -188,7 +188,10 @@ mod tests {
         let framed = FramedMessage::frame(payload);
 
         assert_eq!(framed.len(), 4 + payload.len());
-        assert_eq!(FramedMessage::read_length(&framed), Some(payload.len() as u32));
+        assert_eq!(
+            FramedMessage::read_length(&framed),
+            Some(payload.len() as u32)
+        );
         assert_eq!(&framed[4..], payload);
     }
 
