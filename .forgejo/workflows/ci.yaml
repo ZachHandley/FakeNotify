@@ -112,14 +112,18 @@ jobs:
       - name: Build release
         run: cargo build --release --workspace
 
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp $CARGO_TARGET_DIR/release/fakenotifyd dist/
+          cp $CARGO_TARGET_DIR/release/libfakenotify_preload.so dist/
+
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: binaries-x86_64-gnu
           retention-days: 1
-          path: |
-            target/release/fakenotifyd
-            target/release/libfakenotify_preload.so
+          path: dist/
 
   verify:
     name: Verify
@@ -127,7 +131,7 @@ jobs:
     needs: build
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: binaries-x86_64-gnu
           path: dist
@@ -137,5 +141,5 @@ jobs:
           ls -la dist/
           file dist/fakenotifyd
           file dist/libfakenotify_preload.so
-          test -x dist/fakenotifyd || chmod +x dist/fakenotifyd
+          chmod +x dist/fakenotifyd
           ./dist/fakenotifyd --help || true
