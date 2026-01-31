@@ -68,8 +68,8 @@ jobs:
       - name: Package
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/fakenotifyd dist/fakenotifyd-${{ matrix.target }}
-          cp target/${{ matrix.target }}/release/libfakenotify_preload.so dist/libfakenotify_preload-${{ matrix.target }}.so
+          cp $CARGO_TARGET_DIR/${{ matrix.target }}/release/fakenotifyd dist/fakenotifyd-${{ matrix.target }}
+          cp $CARGO_TARGET_DIR/${{ matrix.target }}/release/libfakenotify_preload.so dist/libfakenotify_preload-${{ matrix.target }}.so
 
       - name: Upload artifacts
         uses: https://github.com/christopherhx/gitea-upload-artifact@v4
