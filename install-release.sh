@@ -11,6 +11,59 @@ INSTALL_DIR="/usr/local"
 SYSTEMD_DIR="/etc/systemd/system"
 CONFIG_DIR="/etc/fakenotify"
 REPO="zachhandley/FakeNotify"
+OLD_PRELOAD_PATH="/run/fakenotify/libfakenotify_preload.so"
+NEW_PRELOAD_PATH="/usr/local/lib/libfakenotify_preload.so"
+
+# Migration function to detect and warn about old paths
+migrate_old_paths() {
+    echo ""
+    echo "Checking for old FakeNotify paths..."
+
+    local found_old=0
+
+    # Check environment files
+    for envfile in /etc/environment ~/.bashrc ~/.zshrc ~/.profile; do
+        if [ -f "$envfile" ] && grep -q "$OLD_PRELOAD_PATH" "$envfile" 2>/dev/null; then
+            echo "  WARNING: Found old path in $envfile"
+            echo "           Please update LD_PRELOAD to: $NEW_PRELOAD_PATH"
+            found_old=1
+        fi
+    done
+
+    # Search for docker-compose files with old path
+    if command -v find &>/dev/null; then
+        while IFS= read -r f; do
+            if [ -n "$f" ] && grep -q "$OLD_PRELOAD_PATH" "$f" 2>/dev/null; then
+                echo "  WARNING: Found old path in $f"
+                found_old=1
+            fi
+        done < <(find /home -maxdepth 4 \( -name "docker-compose*.yml" -o -name "compose*.yml" \) 2>/dev/null | head -20)
+    fi
+
+    # Check systemd override files
+    if [ -d /etc/systemd/system ]; then
+        for f in /etc/systemd/system/*.service.d/*.conf /etc/systemd/system/*.service 2>/dev/null; do
+            if [ -f "$f" ] && grep -q "$OLD_PRELOAD_PATH" "$f" 2>/dev/null; then
+                echo "  WARNING: Found old path in $f"
+                found_old=1
+            fi
+        done
+    fi
+
+    if [ "$found_old" -eq 1 ]; then
+        echo ""
+        echo "  To fix, update LD_PRELOAD from:"
+        echo "    $OLD_PRELOAD_PATH"
+        echo "  to:"
+        echo "    $NEW_PRELOAD_PATH"
+        echo ""
+        echo "  And update volume mounts to:"
+        echo "    - /run/fakenotify:/run/fakenotify:ro"
+        echo "    - /usr/local/lib/libfakenotify_preload.so:/usr/local/lib/libfakenotify_preload.so:ro"
+    else
+        echo "  No old paths found."
+    fi
+}
 
 # Detect architecture
 ARCH=$(uname -m)
@@ -77,6 +130,10 @@ echo "  3. Enable on boot: sudo systemctl enable fakenotify"
 echo ""
 echo "For Docker containers:"
 echo "  environment:"
-echo "    - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so"
+echo "    - LD_PRELOAD=/usr/local/lib/libfakenotify_preload.so"
 echo "  volumes:"
-echo "    - /run/fakenotify:/run/fakenotify"
+echo "    - /run/fakenotify:/run/fakenotify:ro"
+echo "    - /usr/local/lib/libfakenotify_preload.so:/usr/local/lib/libfakenotify_preload.so:ro"
+
+# Check for old paths that need updating
+migrate_old_paths

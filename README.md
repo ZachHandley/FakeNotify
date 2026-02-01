@@ -115,21 +115,16 @@ services:
   jellyfin:
     image: jellyfin/jellyfin
     environment:
-      - LD_PRELOAD=/run/fakenotify/libfakenotify_preload.so
+      - LD_PRELOAD=/usr/local/lib/libfakenotify_preload.so
     volumes:
-      # Mount the fakenotify directory (has both socket and library)
-      - /run/fakenotify:/run/fakenotify
+      # Mount the socket directory and library
+      - /run/fakenotify:/run/fakenotify:ro
+      - /usr/local/lib/libfakenotify_preload.so:/usr/local/lib/libfakenotify_preload.so:ro
       # Your NFS media
       - /mnt/media:/media
 ```
 
-That's it. One env var, one volume mount.
-
-> **Tip**: Copy the library to `/run/fakenotify/` alongside the socket:
-> ```bash
-> sudo cp /usr/local/lib/libfakenotify_preload.so /run/fakenotify/
-> ```
-> Or add this to the systemd service's `ExecStartPost`.
+Two mounts: the socket directory and the library file.
 
 ### LinuxServer.io Containers (DockerMod)
 
@@ -142,7 +137,8 @@ services:
     environment:
       - DOCKER_MODS=ghcr.io/zachhandley/fakenotify-mod:latest
     volumes:
-      - /run/fakenotify:/run/fakenotify
+      - /run/fakenotify:/run/fakenotify:ro
+      - /usr/local/lib/libfakenotify_preload.so:/usr/local/lib/libfakenotify_preload.so:ro
       - /mnt/media:/media
 ```
 

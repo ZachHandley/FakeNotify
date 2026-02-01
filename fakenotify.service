@@ -4,7 +4,6 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-ExecStartPre=/bin/cp /usr/local/lib/libfakenotify_preload.so /run/fakenotify/
 ExecStart=/usr/local/bin/fakenotifyd start
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
