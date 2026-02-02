@@ -3,10 +3,20 @@
 
 echo "**** Configuring FakeNotify ****"
 
-# Check for library in standard location (from host mount)
-if [ -f "/run/fakenotify/libfakenotify_preload.so" ]; then
-    PRELOAD_PATH="/run/fakenotify/libfakenotify_preload.so"
+# Install glibc compatibility layer for Alpine (LSIO containers use Alpine)
+if [ -f /etc/alpine-release ]; then
+    echo "**** Installing glibc compatibility for Alpine ****"
+    apk add --no-cache gcompat libgcc 2>/dev/null || true
+fi
+
+# Check for library in standard locations (from host mount)
+if [ -f "/usr/local/lib/libfakenotify_preload.so" ]; then
+    PRELOAD_PATH="/usr/local/lib/libfakenotify_preload.so"
     echo "**** Found FakeNotify library at $PRELOAD_PATH ****"
+elif [ -f "/run/fakenotify/libfakenotify_preload.so" ]; then
+    # Legacy path (deprecated - /run is often noexec)
+    PRELOAD_PATH="/run/fakenotify/libfakenotify_preload.so"
+    echo "**** Found FakeNotify library at $PRELOAD_PATH (legacy path) ****"
 else
     # Download if not mounted
     mkdir -p /fakenotify
