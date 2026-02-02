@@ -42,7 +42,7 @@ migrate_old_paths() {
 
     # Check systemd override files
     if [ -d /etc/systemd/system ]; then
-        for f in /etc/systemd/system/*.service.d/*.conf /etc/systemd/system/*.service 2>/dev/null; do
+        for f in /etc/systemd/system/*.service.d/*.conf /etc/systemd/system/*.service; do
             if [ -f "$f" ] && grep -q "$OLD_PRELOAD_PATH" "$f" 2>/dev/null; then
                 echo "  WARNING: Found old path in $f"
                 found_old=1
